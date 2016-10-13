@@ -1,11 +1,10 @@
 # -*- coding: UTF-8 -*-
 
-import csv
 import pandas
-from src.merchant import *
-from src.compute_month_sales import *
-from logs import *
 from default_values import *
+from logs import *
+from merchant import *
+from compute_month_sales import *
 
 
 def grouped_and_compute_features(offline_data_arg, online_data_arg, total_months):
@@ -31,37 +30,37 @@ if __name__ == "__main__":
 
     # 读取文件
     log_info("读取文件")
-    offline_data_train = pandas.read_csv('../data/ccf_offline_stage1_train.csv')
-    online_data_train = pandas.read_csv('../data/ccf_online_stage1_train.csv')
+    offline_data_train = pandas.read_csv('..\..\data/ccf_offline_stage1_train.csv')
+    online_data_train = pandas.read_csv('..\..\data/ccf_online_stage1_train.csv')
     # 插入使线上线下相同便于操作，值无所谓
     offline_data_train.insert(2, 'Action', online_data_train['Action'])
     online_data_train.insert(5, 'Distance', offline_data_train['Distance'])
     # 1.用1-6月数据得到7月特征
-    # log_info("用1-6月数据得到7月特征")
-    # # 数据按merchant_id分组,并计算特征
-    # log_info("处理中")
-    # merchant_list_1_6 = grouped_and_compute_features(offline_data_train, online_data_train, 6)
-    # # print merchant_list_1_6
-    # # 写入文件
-    # log_info("写入文件")
-    # # 先取得测试数据顺序
-    # offline_data_test = pandas.read_csv('../data/ccf_offline_stage1_test_revised.csv')
-    # test_data_merchant_ids = offline_data_test['Merchant_id'].values
-    # # 生成要写入列表
-    # merchant_features_7 = []
-    # for i in test_data_merchant_ids:
-    #     if i in merchant_list_1_6:  # 是否有不在的？不在的要给个平均值之类的吗？按相似度预测？
-    #         merchant_features_7.append(merchant_list_1_6[i])
-    #     else:
-    #         merchant_features_7.append(default_values)
-    # # 写入
-    # merchant_features_7_df = pandas.DataFrame(merchant_features_7)
-    # merchant_features_7_df.to_csv("..\data\offline_test_merchant-features_month7.csv", index=False)
-    # del merchant_list_1_6
-    # del offline_data_test
-    # del test_data_merchant_ids
-    # del merchant_features_7
-    # del merchant_features_7_df
+    log_info("用1-6月数据得到7月特征")
+    # 数据按merchant_id分组,并计算特征
+    log_info("处理中")
+    merchant_list_1_6 = grouped_and_compute_features(offline_data_train, online_data_train, 6)
+    # print merchant_list_1_6
+    # 写入文件
+    log_info("写入文件")
+    # 先取得测试数据顺序
+    offline_data_test = pandas.read_csv('..\..\data/ccf_offline_stage1_test_revised.csv')
+    test_data_merchant_ids = offline_data_test['Merchant_id'].values
+    # 生成要写入列表
+    merchant_features_7 = []
+    for i in test_data_merchant_ids:
+        if i in merchant_list_1_6:  # 是否有不在的？不在的要给个平均值之类的吗？按相似度预测？
+            merchant_features_7.append(merchant_list_1_6[i])
+        else:
+            merchant_features_7.append(default_values)
+    # 写入
+    merchant_features_7_df = pandas.DataFrame(merchant_features_7)
+    merchant_features_7_df.to_csv("..\..\data\offline_test_merchant-features_month7.csv", index=False)
+    del merchant_list_1_6
+    del offline_data_test
+    del test_data_merchant_ids
+    del merchant_features_7
+    del merchant_features_7_df
 
     # 2.用1-5月数据得到1-6月特征
     log_info("用1-5月数据得到1-6月特征")
@@ -87,7 +86,7 @@ if __name__ == "__main__":
         merchant_id = m[1]
         merchant_features_1_5.append(merchant_list_1_5[merchant_id])
     merchant_features_1_5_df = pandas.DataFrame(merchant_features_1_5)
-    merchant_features_1_5_df.to_csv("..\data\offline_train_merchant-features_month1-5.csv", index=False)
+    merchant_features_1_5_df.to_csv("..\..\data\offline_train_merchant-features_month1-5.csv", index=False)
     del merchant_features_1_5
     del merchant_features_1_5_df
     # 6月
@@ -105,7 +104,7 @@ if __name__ == "__main__":
         else:
             merchant_features_6.append(default_values)
     merchant_features_6_df = pandas.DataFrame(merchant_features_6)
-    merchant_features_6_df.to_csv("..\data\offline_train_merchant-features_month6.csv", index=False)
+    merchant_features_6_df.to_csv("..\..\data\offline_train_merchant-features_month6.csv", index=False)
     log_info("运行完毕")
 
     # log_info("写入文件")
@@ -165,6 +164,7 @@ if __name__ == "__main__":
 # 4,5,6拆开。。
 # 线上线下数据距离等
 # 商户与优惠券关联等
+# 商户相似度，未出现过的商户特征的求法
 
 #文件写回；类，列表等
 

@@ -1,8 +1,9 @@
 # -*- coding: UTF-8 -*-
 
 import numpy
-from src.compute_month_sales import *
+
 from global_values import distance_level
+from compute_month_sales import *
 
 
 class merchant:
