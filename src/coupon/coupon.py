@@ -39,11 +39,13 @@ class Coupon:
         self.action = -1
         self.use_date = null_date
         self.date_received = null_date
+        self.combine_type = "null"
 
     def set_id(self, id):
         #log_debug(str(id))
         if id == 'fixed':
             self.id = fixed_type
+            self.combine_type = 'fixed'
             return
         if type(id) == int:
             self.id = id
@@ -81,9 +83,10 @@ class Coupon:
 
     def set_discount(self, dis, type):
         if dis == "fixed":
-            self.type += 2
+            self.type = type + 2
+            self.combine_type = dis
             return
-
+        if self.id != fixed_type: self.combine_type = dis
         if dis.find(':') == -1:
             self.type = type + 0
             self.set_discount_rate(dis)
@@ -108,6 +111,9 @@ class Coupon:
     def get_use_date(self):
         return self.use_date
 
+    def get_combine_type(self):
+        return self.combine_type
+
     def get_date_received(self):
         return self.date_received
 
@@ -115,7 +121,7 @@ class Coupon:
         if self.id != c.get_id():return
 
         self.tot_cnt += 1
-        if self.get_use_date() == null_date:
+        if c.get_use_date() == null_date:
             self.get_not_used += 1
         else:
 
@@ -130,16 +136,40 @@ class Coupon:
         if c.action == 1: self.buy_cnt += 1
         if c.action == 2: self.get_cnt += 1
 
+
+    def combine_coupon_record(self, c):
+        self.tot_cnt += c.tot_cnt
+        self.get_not_used += c.get_not_used
+        self.used_cnt_within += c.used_cnt_within
+        self.used_cnt_out += c.used_cnt_out
+
+        for i in range(0, len( global_used_month )):
+            self.used_cnt_within_list[i] += c.used_cnt_within_list[i]
+            self.used_cnt_out_list[i] += c.used_cnt_out_list[i]
+
+        self.click_cnt += c.click_cnt
+        self.buy_cnt += c.buy_cnt
+        self.get_cnt += c.get_cnt
+
+
     def cal_avg_var(self):
         tot = 0.0
 
-        for i in self.used_cnt_within_list:
-            tot += i
-        self.monthly_average_used_within_cnt = tot/len(self.used_cnt_within_list)
-        for i in self.used_cnt_within_list:
-            self.monthly_used_variance += (self.monthly_average_used_within_cnt - i) * (self.monthly_average_used_within_cnt - i)
+        for idx in global_used_month:
+            tot += self.used_cnt_within_list[idx-1]
+        self.monthly_average_used_within_cnt = tot/len(global_used_month)
 
-        self.monthly_used_variance /= len(self.used_cnt_within_list)
+        for idx in global_used_month:
+            self.monthly_used_variance += (self.monthly_average_used_within_cnt - self.used_cnt_within_list[idx-1]) * (self.monthly_average_used_within_cnt - self.used_cnt_within_list[idx-1])
+
+        self.monthly_used_variance /= len(global_used_month)
+#       for i in self.used_cnt_within_list:
+#            tot += i
+#        self.monthly_average_used_within_cnt = tot/len(self.used_cnt_within_list)
+#        for i in self.used_cnt_within_list:
+#            self.monthly_used_variance += (self.monthly_average_used_within_cnt - i) * (self.monthly_average_used_within_cnt - i)
+#
+#        self.monthly_used_variance /= len(self.used_cnt_within_list)
 
     def to_tuple(self):
        return ( str(self.id), str(self.click_cnt), str(self.buy_cnt), str(self.get_cnt), str(self.tot_cnt),
@@ -148,4 +178,70 @@ class Coupon:
                 str(self.monthly_average_used_within_cnt), str(self.distance), str(self.user_id), str(self.merchant_id), str(self.action), )
 
 
+
+class Coupon_feature:
+    def __init__(self, c):
+
+        if type(c) == int:
+            self.default_feature()
+            return
+
+        self.c = c
+        if c.tot_cnt != 0:
+           self.used_within_percent = float(c.used_cnt_within)/c.tot_cnt
+        else:
+            self.used_within_percent = default_value
+
+        if c.tot_cnt != 0:
+            self.get_not_used_percent = float(c.get_not_used)/c.tot_cnt
+        else:
+            self.get_not_used_percent = default_value
+
+        if c.tot_cnt != 0:
+            self.used_cnt_out_percent = float(c.used_cnt_out)/c.tot_cnt
+        else:
+            self.used_cnt_out_percent = default_value
+
+        self.discount_percent = default_value
+        if c.type%10 == 0:
+            self.discount_percent = c.discount_rate
+        if c.type%10 == 1:
+            self.discount_percent = float(c.bargin[1])/float(c.bargin[0])
+
+        self.monthly_used_avg_percent = c.monthly_average_used_within_cnt
+        self.monthly_used_variance = c.monthly_used_variance
+        self.sale_rate = []
+        tot_used_within_cnt = 0.0
+        for i in c.used_cnt_within_list:
+            tot_used_within_cnt += i
+        if tot_used_within_cnt == 0:
+            for i in range(0, tot_month):
+                self.sale_rate.append(0.0)
+        else:
+            for i in range(0, tot_month):
+                self.sale_rate.append(c.used_cnt_within_list[i]/ float(tot_used_within_cnt))
+
+    def default_feature(self):
+        self.used_cnt_out_percent = default_value
+        self.get_not_used_percent = default_value
+        self.used_cnt_out_percent = default_value
+        self.discount_percent = default_value
+        self.monthly_used_avg_percent = default_value
+        self.monthly_used_variance  = default_value
+        self.sale_rate = []
+        for i in range(0, tot_month):
+            self.sale_rate.append(default_value)
+
+    def to_tuple(self):
+        ret = []
+        ret.append(str(self.used_cnt_out_percent))
+        ret.append(str(self.get_not_used_percent))
+        ret.append(str(self.used_cnt_out_percent))
+        ret.append(str(self.discount_percent))
+        ret.append(str(self.monthly_used_avg_percent))
+        ret.append(str(self.monthly_used_variance))
+        for r in self.sale_rate:
+            ret.append(str(r))
+
+        return tuple(ret)
 
