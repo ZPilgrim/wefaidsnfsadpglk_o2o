@@ -1,7 +1,9 @@
 # -*- coding: UTF-8 -*-
 
-from global_values import distance_level
+distance_level = 11
+months_first_days = ['20160101', '20160201', '20160301', '20160401', '20160501', '20160601', '20160701']
 
+# 商户特征默认取值
 dist_user_portion_default = [0.0] * distance_level  # 距离为i档的用户的个数/该店总的用户的个数
 dist_consume_portion_default = [0.0] * distance_level  # 距离为i档的消费记录的个数/该店总的消费记录的个数
 # 上面两个特征只使用线下数据计算，但未分母去掉距离为null的记录，是否合适？
@@ -12,5 +14,7 @@ latest_pi_default = 0.0
 gradient_avg_default = 0.0  # 梯度平均值，即近2个月销售额差值平均值
 visit_frequency_without_coupon_default = 0.0  # 被访问次数/总的记录
 default_values = dist_user_portion_default + dist_consume_portion_default + \
-               [used_coupon_portion_default, pi_avg_default, pi_var_default, latest_pi_default, \
+               [used_coupon_portion_default, pi_avg_default, pi_var_default, latest_pi_default,
                 gradient_avg_default, visit_frequency_without_coupon_default]
+
+# 数组下标含义定义..

@@ -6,8 +6,8 @@ from global_values import distance_level
 from compute_month_sales import *
 
 
-class merchant:
-    def __init__(self, merchant_id, total_months, offline_data, online_data):
+class Merchant:
+    def __init__(self, merchant_id, start_month, end_month, offline_data, online_data):
         # 商户特征
         self.merchant_id = merchant_id
         self.dist_user_portion = [0.0] * distance_level  # 距离为i档的用户的个数/该店总的用户的个数
@@ -26,14 +26,15 @@ class merchant:
         # 其他所需变量
         self.offline_data = offline_data
         self.online_data = online_data
-        self.total_months = total_months
-        self.month_sales = [0] * self.total_months
+        self.start_month = start_month
+        self.end_month = end_month
+        self.month_sales = [0] * (self.end_month - self.start_month + 1)
 
     def compute_dist_user_portion(self):
         if len(self.offline_data) == 0:
             self.dist_user_portion = [-1] * distance_level
             return
-        sorted(self.offline_data, key = lambda offline_record: offline_record[0])
+        sorted(self.offline_data, key=lambda offline_record: offline_record[0])
 #        print self.offline_data
         temp_user_id = self.offline_data[0][0]
         user_count = 1
@@ -51,7 +52,7 @@ class merchant:
 
     def compute_dist_consume_portion(self):
         if len(self.offline_data) == 0:
-            self.dist_consume_portion = [-1] * distance_level #缺失值填负值
+            self.dist_consume_portion = [-1] * distance_level # 缺失值填负值
             return
         dist_consume_count = [0] * distance_level
         consume_count = 0
@@ -76,22 +77,22 @@ class merchant:
         # print self.used_coupon_portion
 
     def compute_month_sales(self):
-        self.month_sales = compute_month_sales(self.offline_data, self.online_data, self.total_months)
+        self.month_sales = compute_month_sales(self.offline_data, self.online_data, self.start_month, self.end_month)
 
     def compute_pi(self, all_merchants_month_sales):
         self.compute_month_sales()
-        pi = [0.0] * self.total_months
-        for i in range(0, self.total_months):
+        pi = [0.0] * (self.end_month - self.start_month + 1)
+        for i in range(len(all_merchants_month_sales)):
             if all_merchants_month_sales[i] != 0:
-              pi[i] = float(self.month_sales[i]) / float(all_merchants_month_sales[i])
+                pi[i] = float(self.month_sales[i]) / float(all_merchants_month_sales[i])
         self.pi_avg = numpy.mean(pi)
         self.pi_var = numpy.var(pi)
-        self.latest_pi = pi[self.total_months - 1]
+        self.latest_pi = pi[-1]
         # print self.pi_avg, self.pi_var, self.latest_pi
 
     def compute_gradient_avg(self):
         self.compute_month_sales()
-        self.gradient_avg = float(self.month_sales[self.total_months - 1] - self.month_sales[self.total_months - 3]) / 2
+        self.gradient_avg = float(self.month_sales[-1] - self.month_sales[0]) / 2
         # print self.gradient_avg
 
     def compute_visit_frequency_without_coupon(self):
@@ -102,8 +103,8 @@ class merchant:
         for r in self.online_data:
             if r[3] == "null" and r[7] != "":
                 visit_times_without_coupon += 1
-        self.visit_frequency_without_coupon = float(visit_times_without_coupon) \
-                                              / float(len(self.offline_data) + len(self.online_data))
+        self.visit_frequency_without_coupon = float(visit_times_without_coupon) / \
+                                              float(len(self.offline_data) + len(self.online_data))
         # print self.visit_frequency_without_coupon
 
     def compute_all_features(self, all_merchants_used_coupons, all_merchants_month_sales):
