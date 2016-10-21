@@ -2,12 +2,13 @@
 
 import numpy
 
-from global_values import distance_level
+from global_values import distance_level, USER_ID, MERCHANT_ID, COUPON_ID, DISCOUNT_RATE, DISTANCE, DATE_RECEIVED, DATE
+
 from compute_month_sales import *
 
 
 class Merchant:
-    def __init__(self, merchant_id, start_month, end_month, offline_data, online_data):
+    def __init__(self, merchant_id, start_month, end_month, offline_data):
         # 商户特征
         self.merchant_id = merchant_id
         self.dist_user_portion = [0.0] * distance_level  # 距离为i档的用户的个数/该店总的用户的个数
@@ -25,7 +26,6 @@ class Merchant:
 
         # 其他所需变量
         self.offline_data = offline_data
-        self.online_data = online_data
         self.start_month = start_month
         self.end_month = end_month
         self.month_sales = [0] * (self.end_month - self.start_month + 1)
@@ -39,13 +39,13 @@ class Merchant:
         temp_user_id = self.offline_data[0][0]
         user_count = 1
         dist_user_count = [0] * distance_level
-        if self.offline_data[0][5] != 'null':
-            dist_user_count[int(self.offline_data[0][5])] += 1
+        if self.offline_data[0][DISTANCE] != 'null':
+            dist_user_count[int(self.offline_data[0][DISTANCE])] += 1
         for r in self.offline_data:
             if temp_user_id != r[0]:
                 user_count += 1
-                if r[5] != 'null':
-                    dist_user_count[int(r[5])] += 1
+                if r[DISTANCE] != 'null':
+                    dist_user_count[int(r[DISTANCE])] += 1
         for i in range(distance_level):
             self.dist_user_portion[i] = float(dist_user_count[i]) / float(user_count)
             # print self.dist_user_portion[i]
@@ -58,8 +58,8 @@ class Merchant:
         consume_count = 0
         for r in self.offline_data:
             consume_count += 1
-            if r[5] != 'null':
-                dist_consume_count[int(r[5])] += 1
+            if r[DISTANCE] != 'null':
+                dist_consume_count[int(r[DISTANCE])] += 1
         for i in range(distance_level):
             self.dist_consume_portion[i] = float(dist_consume_count[i]) / float(consume_count)
             #            print self.dist_consume_portion[i]
@@ -67,17 +67,14 @@ class Merchant:
     def compute_used_coupon_portion(self, all_merchants_used_coupons):
         used_coupons = 0
         for r in self.offline_data:
-            if r[7] != "" and r[3] != "null":
-                used_coupons += 1
-        for r in self.online_data:
-            if r[7] != "" and r[3] != "null":
+            if r[DATE] != "" and r[COUPON_ID] != "null":
                 used_coupons += 1
         if all_merchants_used_coupons != 0:
             self.used_coupon_portion = float(used_coupons) / float(all_merchants_used_coupons)
         # print self.used_coupon_portion
 
     def compute_month_sales(self):
-        self.month_sales = compute_month_sales(self.offline_data, self.online_data, self.start_month, self.end_month)
+        self.month_sales = compute_month_sales(self.offline_data, self.start_month, self.end_month)
 
     def compute_pi(self, all_merchants_month_sales):
         self.compute_month_sales()
@@ -98,13 +95,9 @@ class Merchant:
     def compute_visit_frequency_without_coupon(self):
         visit_times_without_coupon = 0
         for r in self.offline_data:
-            if r[3] == "null" and r[7] != "":
+            if r[COUPON_ID] == "null" and r[DATE] != "":
                 visit_times_without_coupon += 1
-        for r in self.online_data:
-            if r[3] == "null" and r[7] != "":
-                visit_times_without_coupon += 1
-        self.visit_frequency_without_coupon = float(visit_times_without_coupon) / \
-                                              float(len(self.offline_data) + len(self.online_data))
+        self.visit_frequency_without_coupon = float(visit_times_without_coupon) / float(len(self.offline_data))
         # print self.visit_frequency_without_coupon
 
     def compute_all_features(self, all_merchants_used_coupons, all_merchants_month_sales):
@@ -118,6 +111,6 @@ class Merchant:
     def to_record(self):
         # [self.merchant_id] +
         return self.dist_user_portion + self.dist_consume_portion + \
-               [self.used_coupon_portion, self.pi_avg, self.pi_var, self.latest_pi, \
+               [self.used_coupon_portion, self.pi_avg, self.pi_var, self.latest_pi,
                 self.gradient_avg, self.visit_frequency_without_coupon]
 

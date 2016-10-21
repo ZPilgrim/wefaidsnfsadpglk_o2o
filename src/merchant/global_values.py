@@ -17,4 +17,11 @@ default_values = dist_user_portion_default + dist_consume_portion_default + \
                [used_coupon_portion_default, pi_avg_default, pi_var_default, latest_pi_default,
                 gradient_avg_default, visit_frequency_without_coupon_default]
 
-# 数组下标含义定义..
+# 数组下标含义定义
+USER_ID = 0
+MERCHANT_ID = 1
+COUPON_ID = 2
+DISCOUNT_RATE = 3
+DISTANCE = 4
+DATE_RECEIVED = 5
+DATE = 6
